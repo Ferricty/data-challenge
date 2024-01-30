@@ -1,6 +1,7 @@
 # Data Challenge
 Germany is divided in post-codes documentation here: https://worldpostalcode.com/germany/ and here: https://en.wikipedia.org/wiki/Postal_codes_in_Germany
 
+![]()
 Tasks:
 - Build a small scraper, that downloads a list of all German cities from wikipedia (https://de.wikipedia.org/wiki/Liste_der_St%C3%A4dte_in_Deutschland) and gets the postcode(s) from each of this cities.
 - Convert the postcode to longitude and latitude coordinates and return the results in a table or csv.
