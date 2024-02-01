@@ -1,26 +1,51 @@
-
 '''
 Convert the postcode to longitude and latitude coordinates and
 return the results in a table or csv.
 '''
-from geopy.geocoders import Nominatim
-#from geopy.extra.rate_limiter import RateLimiter
+
 import logging
 import requests
+from time import sleep
+import random
+from geopy.geocoders import Nominatim
 
 # To hide WARNING:urllib3.connectionpool:Retrying
 logging.getLogger(requests.packages.urllib3.__package__).setLevel(logging.ERROR)
 
-def get_longitude_latitude(postcode):
-    geolocator = Nominatim(user_agent="data-challenge2")
-    #geocode = RateLimiter(geolocator.geocode, min_delay_seconds = 1)
-    location = geolocator.geocode({"postalcode": str(postcode), "country": 'deutschland'}, country_codes = 'de')
+user_agent = 'data-challenge_{}'.format(random.randint(10000,99999))
+geolocator = Nominatim(user_agent=user_agent)
+
+def get_longitude_latitude(postcode, geolocator = geolocator):
+    """
+    Convert the postcode to longitude and latitude coordinates and
+    return the results.
+
+    Args:
+    - postcode (str/int): The postcode to convert to coordinates.
+    - geolocator (Nominatim): The geolocator object for geocoding.
+
+    Returns:
+    - Tuple: A tuple containing the latitude and longitude coordinates.
+    """
+    location = geolocator.geocode({"postalcode": str(postcode), "country": 'Germany'}, country_codes = 'de')
+    sleep(random.randint(50,150)/100)
     if location:
         return location.latitude, location.longitude
     else:
         return None, None
-
+           
 def processing_df_to_obtain_lat_long(df, BATCH_SIZE):
+    """
+    Process the dataframe to obtain latitude and longitude coordinates.
+
+    Args:
+    - df (pd.DataFrame): The input dataframe containing postcode data.
+    - BATCH_SIZE (int): The batch size for processing.
+
+    Returns:
+    - pd.DataFrame: The dataframe with latitude and longitude coordinates added.
+    """
+    
     # We divide the process into batches (batch processing) to improve efficiency
     
     longitudes = []
@@ -37,7 +62,5 @@ def processing_df_to_obtain_lat_long(df, BATCH_SIZE):
     # We add the columns for latitude and longitude to the DataFrame
     df['latitude'] = latitudes
     df['longitude'] = longitudes
-    
-    print(df.head())
 
     return df

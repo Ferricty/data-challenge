@@ -3,7 +3,6 @@ Write a function, that takes a postcode or city name and radius (in km)
 as input and returns all postcodes within the radius.
 """
 
-
 from geopy.distance import geodesic
 import pandas as pd
 

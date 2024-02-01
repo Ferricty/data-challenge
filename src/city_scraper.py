@@ -4,8 +4,33 @@ from bs4 import BeautifulSoup
 import requests
 import pandas as pd
 
-def scraper_basic_info(URL_MAIN, URL_BASE, FRAGMENT_SIZE):
-    
+def scraper_basic_info(URL_MAIN: str, URL_BASE: str, FRAGMENT_SIZE: int):
+    """
+    Scrape basic information from a website.
+
+    Args:
+    - URL_MAIN (str): The main URL from which to scrape the basic information.
+    - URL_BASE (str): The base URL to be used for forming absolute URLs.
+    - FRAGMENT_SIZE (int): The size of each fragment for scraping.
+
+    Returns:
+    - dict: A dictionary mapping city URLs to their respective names.
+    - pd.DataFrame: The concatenated dataframe containing the scraped data.
+
+    Example:
+    urls_to_names, city_dataframe = scraper_basic_info('https://example.com/main', 'https://example.com/', 100)
+
+    The function performs the following steps:
+    1. Scrapes the basic information from the main URL and extracts city names and relative URLs.
+    2. Obtains the absolute URL for each city.
+    3. Creates a dictionary mapping absolute city URLs to their names.
+    4. Generates smaller fragments of URLs for scraping based on the provided fragment size.
+    5. Stores each scraped fragment into a list of dataframes.
+    6. Concatenates the list of dataframes into a single dataframe.
+
+    The function returns the mapping of city URLs to their names and the concatenated dataframe.
+    """
+
     response = requests.get(URL_MAIN)
 
     soup = BeautifulSoup(response.text, 'html.parser')
@@ -45,15 +70,49 @@ def scraper_basic_info(URL_MAIN, URL_BASE, FRAGMENT_SIZE):
 
 
 class WebScraper(object):
-    def __init__(self, urls):
-        self.urls = urls
-        # Global Place To Store The Data:
 
+    """
+    A web scraper for obtaining postcodes from city URLs.
+
+    Attributes:
+    - urls (list): A list of city URLs to be scraped.
+    - master_dict (dict): A dictionary to store the scraped data.
+
+    Example:
+    urls = ['http://example.com/city1', 'http://example.com/city2']
+    scraper = WebScraper(urls)
+    """
+
+    def __init__(self, urls):
+
+        """
+        Initializes the WebScraper with a list of URLs and initiates the scraping process.
+
+        Args:
+        - urls (list): A list of city URLs to be scraped.
+        """
+
+        self.urls = urls
+        
+        # Global Place To Store The Data:
         self.master_dict = {}
+        
         # Run The Scraper:
         asyncio.run(self.main())
 
     async def fetch(self, session, url):
+
+        """
+        Fetches the postcode for a given city URL.
+
+        Args:
+        - session (aiohttp.ClientSession): An async HTTP client session.
+        - url (str): The URL of the city.
+
+        Returns:
+        - Tuple: A tuple containing the URL and its corresponding postcode.
+        """
+
         try:
             async with session.get(url) as response:
                 # 1. Extracting the Text:
@@ -67,6 +126,17 @@ class WebScraper(object):
             print(str(e))
 
     async def extract_postcode(self, city_href):
+        
+        """
+        Extracts the postcode from the city's HTML content.
+
+        Args:
+        - city_href (str): The HTML content of the city URL.
+
+        Returns:
+        - str: The extracted postcode.
+        """
+
         try:
 
             soup_city = BeautifulSoup(city_href, 'html.parser')
@@ -78,6 +148,15 @@ class WebScraper(object):
             print(str(e))
 
     async def main(self):
+        
+        """
+        The main scraping method.
+
+        - Initiates an async HTTP client session.
+        - Loops through the provided URLs, initiates the fetch and extracts postcode asynchronously.
+        - Stores the fetched postcodes in the master dictionary.
+        """
+        
         tasks = []
         headers = {
             "user-agent": "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"}

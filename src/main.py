@@ -1,13 +1,15 @@
 import os
-
+import pandas as pd
 from data_cleaner import cleaning_df_city_data
 from postcode_to_longlat import processing_df_to_obtain_lat_long
 from city_scraper import scraper_basic_info
-from missing_coordinates import missing_coordinates_multiple
+from missing_coordinates import missing_coordinates
 
 
 project_dir = os.path.dirname(__file__)
-data_dir = os.path.join(os.path.dirname(project_dir),'data/output/nombre.csv')
+
+df_city_latlong_output = os.path.join(os.path.dirname(project_dir),
+                                    'data/output/df_city_latlong_output.csv')
 
 def main():
     URL_MAIN = 'https://de.wikipedia.org/wiki/Liste_der_St%C3%A4dte_in_Deutschland'
@@ -17,7 +19,7 @@ def main():
     FRAGMENT_SIZE = 25
 
     dict_url_city_name, df_city = scraper_basic_info(URL_MAIN, URL_BASE, FRAGMENT_SIZE)
-    
+
     df_city = cleaning_df_city_data(df_city, dict_url_city_name)
 
     """
@@ -30,13 +32,21 @@ def main():
 
     df_city = processing_df_to_obtain_lat_long(df_city, BATCH_SIZE)
 
-    df_city.to_csv('data/output/df_city_latlong_output.csv',index=False)
-
-
-    """Checking for missing values"""
-
-    df_with_latlong, df_to_obtain_latlong = missing_coordinates_multiple(df_missing_data = df_city)
+    df_city_copy = df_city.copy()
     
+    ## Checking for missing values
+
+    df_multiple_row = missing_coordinates(df = df_city, BATCH_SIZE = BATCH_SIZE)
+    df_multiple_row_copy = df_multiple_row.copy()
+    
+    df_single_row = missing_coordinates(df = df_multiple_row_copy, BATCH_SIZE = BATCH_SIZE)
+    df_city = df_city.dropna()
+    df_multiple_row = df_multiple_row.dropna()
+    df_single_row = df_single_row.dropna()
+
+    df_final = pd.concat([df_single_row,df_multiple_row,df_city])
+       
+    df_final.to_csv(df_city_latlong_output, index=False)
     
 
 
