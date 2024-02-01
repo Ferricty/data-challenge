@@ -3,11 +3,12 @@ Convert the postcode to longitude and latitude coordinates and
 return the results in a table or csv.
 '''
 
+from geopy.geocoders import Nominatim
 import logging
+import pandas as pd
+import random
 import requests
 from time import sleep
-import random
-from geopy.geocoders import Nominatim
 
 # To hide WARNING:urllib3.connectionpool:Retrying
 logging.getLogger(requests.packages.urllib3.__package__).setLevel(logging.ERROR)
@@ -34,7 +35,7 @@ def get_longitude_latitude(postcode, geolocator = geolocator):
     else:
         return None, None
            
-def processing_df_to_obtain_lat_long(df, BATCH_SIZE):
+def processing_df_to_obtain_lat_long(df: pd.DataFrame, BATCH_SIZE: int) -> pd.DataFrame:
     """
     Process the dataframe to obtain latitude and longitude coordinates.
 

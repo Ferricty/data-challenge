@@ -1,6 +1,7 @@
+import pandas as pd
 from postcode_to_longlat import processing_df_to_obtain_lat_long
 
-def missing_coordinates(df, BATCH_SIZE):
+def missing_coordinates(df: pd.DataFrame, BATCH_SIZE: int):
     """
     Process the dataframe to obtain missing latitude and longitude coordinates.
 
