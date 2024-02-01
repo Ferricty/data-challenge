@@ -1,5 +1,6 @@
 import os
 import pandas as pd
+
 from data_cleaner import cleaning_df_city_data
 from postcode_to_longlat import processing_df_to_obtain_lat_long
 from city_scraper import scraper_basic_info
@@ -45,8 +46,14 @@ def main():
      
     df_final.to_csv(df_city_latlong_output, index=False)
     
-
+    """
+    Function, that takes a postcode or city name and radius (in km) 
+    as input and returns all postcodes within the radius.
+    """
     # Example:
     nearby_cities = closer_cities(limit_distance = 20, origin_city = 'Berlin')
-    nearby_cities
+    
+    print(nearby_cities)
 
+if __name__ == "__main__":
+    main()

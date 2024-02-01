@@ -1,8 +1,8 @@
-import asyncio
 import aiohttp
+import asyncio
 from bs4 import BeautifulSoup
-import requests
 import pandas as pd
+import requests
 
 def scraper_basic_info(URL_MAIN: str, URL_BASE: str, FRAGMENT_SIZE: int):
     """

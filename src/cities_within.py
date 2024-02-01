@@ -4,8 +4,8 @@ as input and returns all postcodes within the radius.
 """
 
 from geopy.distance import geodesic
-import pandas as pd
 import os
+import pandas as pd
 
 project_dir = os.path.dirname(__file__)
 

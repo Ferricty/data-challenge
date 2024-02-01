@@ -7,6 +7,7 @@ df_city_postcodes = os.path.join(os.path.dirname(project_dir),
                                     'data/output/df_city_postcodes.csv')
 
 def cleaning_df_city_data(df_city: pd.DataFrame, dict_url_city_name: dict) -> pd.DataFrame:
+    
     """
     Performs data cleaning on the provided dataframe.
 
