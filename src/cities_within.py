@@ -7,31 +7,6 @@ from geopy.distance import geodesic
 import os
 import pandas as pd
 
-project_dir = os.path.dirname(__file__)
-
-df_city_latlong_output = os.path.join(os.path.dirname(project_dir),
-                                    'data/output/df_city_latlong_output.csv')
-
-df_city_details = pd.read_csv(df_city_latlong_output)
-
-df_city_details['coordinate'] = df_city_details.apply(
-                                                      lambda row:
-                                                      (row["latitude"] , row["longitude"]),
-                                                      axis=1,
-                                                  )
-
-city_coords = df_city_details[['name','coordinate']].set_index("name").T.to_dict('records')[0]
-
-# Commented for improve readability
-
-# city_coords = {
-#              'Aßlar': (50.501544, 26.0705386),
-#              'Aach': (47.84204984036061, 8.854742132732317),
-#              'Aachen': (50.77643283176553, 6.086669673288873),
-#              'Aalen': (48.83874607033844, 10.085620109546616),
-#              'Abenberg': (49.23760620916201, 10.951095987821228),
-#              'Abensberg': (58.22442178189655, 22.118634066810344),
-#              ...}
 
 
 def closer_cities(limit_distance: int|float,
@@ -61,6 +36,35 @@ def closer_cities(limit_distance: int|float,
     Helper function:
     The function helper_closer_city is used to find nearby cities based on the specified criteria.
     """
+    project_dir = os.path.dirname(__file__)
+
+    df_city_latlong_output = os.path.join(os.path.dirname(project_dir),
+                                        'data/output/df_city_latlong_output.csv')
+
+    df_city_details = pd.read_csv(df_city_latlong_output)
+
+    df_city_details['coordinate'] = df_city_details.apply(
+                                                        lambda row:
+                                                        (row["latitude"] , row["longitude"]),
+                                                        axis=1,
+                                                    )
+
+    city_coords = df_city_details[['city_name','coordinate']].set_index("city_name").T.to_dict('records')[0]
+
+    # Commented for improve readability
+
+    # city_coords = {
+    #              'Aßlar': (50.501544, 26.0705386),
+    #              'Aach': (47.84204984036061, 8.854742132732317),
+    #              'Aachen': (50.77643283176553, 6.086669673288873),
+    #              'Aalen': (48.83874607033844, 10.085620109546616),
+    #              'Abenberg': (49.23760620916201, 10.951095987821228),
+    #              'Abensberg': (58.22442178189655, 22.118634066810344),
+    #              ...}
+
+        
+        
+        
     if origin_city:
       # Criteria city
         return helper_closer_city(city_coords = city_coords, city_name = origin_city, limit_distance = limit_distance)

@@ -19,9 +19,9 @@ def main():
     # The fragment size for splitting the list
     FRAGMENT_SIZE = 25
 
-    dict_url_city_name, df_city = scraper_basic_info(URL_MAIN, URL_BASE, FRAGMENT_SIZE)
+    df_city = scraper_basic_info(URL_MAIN, URL_BASE, FRAGMENT_SIZE)
 
-    df_city = cleaning_df_city_data(df_city, dict_url_city_name)
+    df_city = cleaning_df_city_data(df_city)
     
     # The batch size for obtain latitude and longitude
     BATCH_SIZE = 25

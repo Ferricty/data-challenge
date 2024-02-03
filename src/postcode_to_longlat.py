@@ -3,14 +3,12 @@ Convert the postcode to longitude and latitude coordinates and
 return the results in a table or csv.
 '''
 
-from geopy.geocoders import Nominatim
 import logging
-import pandas as pd
-import random
 import requests
 from time import sleep
+import random
+from geopy.geocoders import Nominatim
 
-# To hide WARNING:urllib3.connectionpool:Retrying
 logging.getLogger(requests.packages.urllib3.__package__).setLevel(logging.ERROR)
 
 user_agent = 'data-challenge_{}'.format(random.randint(10000,99999))
@@ -34,8 +32,11 @@ def get_longitude_latitude(postcode, geolocator = geolocator):
         return location.latitude, location.longitude
     else:
         return None, None
-           
-def processing_df_to_obtain_lat_long(df: pd.DataFrame, BATCH_SIZE: int) -> pd.DataFrame:
+
+
+
+
+def processing_df_to_obtain_lat_long(df, BATCH_SIZE):
     """
     Process the dataframe to obtain latitude and longitude coordinates.
 
@@ -46,20 +47,21 @@ def processing_df_to_obtain_lat_long(df: pd.DataFrame, BATCH_SIZE: int) -> pd.Da
     Returns:
     - pd.DataFrame: The dataframe with latitude and longitude coordinates added.
     """
-    
+
     # We divide the process into batches (batch processing) to improve efficiency
-    
+
     longitudes = []
     latitudes = []
 
     for index in range(0, len(df), BATCH_SIZE):
         
+        print(f"Latitude and Longitude for: {index} of {len(df)//BATCH_SIZE + 1}")
         # We obtain the longitudes and latitudes for the current batch
         coordinates = df['first_postcode'].iloc[index:index + BATCH_SIZE].apply(get_longitude_latitude)
         lat, lon = zip(*coordinates)  # We separate the latitudes and longitudes
         latitudes.extend(lat)
         longitudes.extend(lon)
-        
+
     # We add the columns for latitude and longitude to the DataFrame
     df['latitude'] = latitudes
     df['longitude'] = longitudes

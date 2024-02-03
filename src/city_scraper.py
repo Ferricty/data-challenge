@@ -1,12 +1,19 @@
-import aiohttp
+"""_summary_
+
+Returns:
+    _type_: _description_
+"""
+
+
 import asyncio
+import aiohttp
 from bs4 import BeautifulSoup
-import pandas as pd
 import requests
+import pandas as pd
 
 def scraper_basic_info(URL_MAIN: str, URL_BASE: str, FRAGMENT_SIZE: int):
     """
-    Scrape basic information from a website.
+    Scrape information from a website.
 
     Args:
     - URL_MAIN (str): The main URL from which to scrape the basic information.
@@ -14,21 +21,19 @@ def scraper_basic_info(URL_MAIN: str, URL_BASE: str, FRAGMENT_SIZE: int):
     - FRAGMENT_SIZE (int): The size of each fragment for scraping.
 
     Returns:
-    - dict: A dictionary mapping city URLs to their respective names.
     - pd.DataFrame: The concatenated dataframe containing the scraped data.
 
     Example:
     urls_to_names, city_dataframe = scraper_basic_info('https://example.com/main', 'https://example.com/', 100)
 
     The function performs the following steps:
-    1. Scrapes the basic information from the main URL and extracts city names and relative URLs.
+    1. Scrapes the basic information from the main URL and extracts city relative URLs.
     2. Obtains the absolute URL for each city.
-    3. Creates a dictionary mapping absolute city URLs to their names.
-    4. Generates smaller fragments of URLs for scraping based on the provided fragment size.
-    5. Stores each scraped fragment into a list of dataframes.
-    6. Concatenates the list of dataframes into a single dataframe.
+    3. Generates smaller fragments of URLs for scraping based on the provided fragment size.
+    4. Stores each scraped fragment into a list of dataframes.
+    5. Concatenates the list of dataframes into a single dataframe.
 
-    The function returns the mapping of city URLs to their names and the concatenated dataframe.
+    The function returns the concatenated dataframe.
     """
 
     response = requests.get(URL_MAIN)
@@ -36,21 +41,14 @@ def scraper_basic_info(URL_MAIN: str, URL_BASE: str, FRAGMENT_SIZE: int):
     soup = BeautifulSoup(response.text, 'html.parser')
 
     initial_data = soup.find_all('dd') # All the names are dd tags
-    
-    city_name = [city.find("a").text for city in initial_data]
-    
-    print(f"Amount of cities: {len(city_name)}") # 2056 it's equals to the amount of cities at the URL_MAIN page
 
     # Get relative URL for each city
     city_url_rel = [city.find("a").get("href") for city in initial_data]
     print(f"Amount of urls: {len(city_url_rel)}") # 2056
-    
+
     # Obtaining the absolute url for each of the cities.
     url_city_absolute = [URL_BASE + href for href in city_url_rel]
 
-    # We will use the following dictionary to clean the dataframe that we will obtain in future steps.
-    dict_url_city_name = dict(zip(url_city_absolute, city_name))
-    
     # Generate smaller fragments for scraping
     fragments = [url_city_absolute[i:i + FRAGMENT_SIZE] for i in range(0, len(url_city_absolute), FRAGMENT_SIZE)]
 
@@ -65,9 +63,8 @@ def scraper_basic_info(URL_MAIN: str, URL_BASE: str, FRAGMENT_SIZE: int):
         df_list.append(pd.DataFrame.from_dict(scraper.master_dict, orient='index'))
 
     df_city = pd.concat(df_list)
-    
-    return dict_url_city_name, df_city
 
+    return df_city
 
 class WebScraper(object):
 
@@ -93,10 +90,10 @@ class WebScraper(object):
         """
 
         self.urls = urls
-        
+
         # Global Place To Store The Data:
         self.master_dict = {}
-        
+
         # Run The Scraper:
         asyncio.run(self.main())
 
@@ -120,13 +117,16 @@ class WebScraper(object):
 
                 # 2. Extracting the postcode:
                 postcode = await self.extract_postcode(city_href)
-                return url, postcode
+
+                # 2. Extracting the city_name:
+                city_name = await self.extract_city_name(city_href)
+                return url, postcode, city_name
 
         except Exception as e:
             print(str(e))
 
     async def extract_postcode(self, city_href):
-        
+
         """
         Extracts the postcode from the city's HTML content.
 
@@ -147,8 +147,29 @@ class WebScraper(object):
         except Exception as e:
             print(str(e))
 
+    async def extract_city_name(self, city_href):
+
+        """
+        Extracts the name from the city's HTML content.
+
+        Args:
+        - city_href (str): The HTML content of the city URL.
+
+        Returns:
+        - str: The extracted name.
+        """
+
+        try:
+
+            soup_city = BeautifulSoup(city_href, 'html.parser')
+
+            city_name = soup_city.find('h1', attrs={'id':"firstHeading"}).text
+            return city_name
+
+        except Exception as e:
+            print(str(e))
+
     async def main(self):
-        
         """
         The main scraping method.
 
@@ -156,7 +177,7 @@ class WebScraper(object):
         - Loops through the provided URLs, initiates the fetch and extracts postcode asynchronously.
         - Stores the fetched postcodes in the master dictionary.
         """
-        
+
         tasks = []
         headers = {
             "user-agent": "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"}
@@ -170,6 +191,6 @@ class WebScraper(object):
             for html in htmls:
                 if html is not None:
                     url = html[0]
-                    self.master_dict[url] = {'postcode': html[1]}
+                    self.master_dict[url] = {'postcode': html[1],'city_name': html[2]}
                 else:
                     continue
