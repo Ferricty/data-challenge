@@ -8,6 +8,34 @@ import requests
 from time import sleep
 import random
 from geopy.geocoders import Nominatim
+from geopy.exc import GeocoderUnavailable
+
+from cache import get_lat_lng_from_cache, update_city_postal_data
+
+
+def helper_long_lat(postcode):
+    retry_limit = 5
+    retries = 0
+    while retries < retry_limit:
+        try:
+            location = geolocator.geocode({"postalcode": str(postcode), "country": 'Germany'}, country_codes = 'de')
+            sleep(random.randint(50,150)/100)
+            if location:
+                update_city_postal_data(postcode, location.latitude, location.longitude)
+                return location.latitude, location.longitude
+            else:
+                return None, None
+        except GeocoderUnavailable as e:
+            print(f"Error: {e}")
+            retries += 1
+            if retries < retry_limit:
+                print(f"Wait 5 second...")
+                sleep(5)  # Wait
+            else:
+                print("Max retries exceeded")
+
+
+
 
 logging.getLogger(requests.packages.urllib3.__package__).setLevel(logging.ERROR)
 
@@ -26,12 +54,15 @@ def get_longitude_latitude(postcode, geolocator = geolocator):
     Returns:
     - Tuple: A tuple containing the latitude and longitude coordinates.
     """
-    location = geolocator.geocode({"postalcode": str(postcode), "country": 'Germany'}, country_codes = 'de')
-    sleep(random.randint(50,150)/100)
-    if location:
-        return location.latitude, location.longitude
-    else:
-        return None, None
+    try:
+        lat_lng = get_lat_lng_from_cache(postcode)
+        if lat_lng[0]:
+            latitude, longitude = lat_lng
+            return latitude, longitude
+        else:
+            return helper_long_lat(postcode)
+    except TypeError:
+        return helper_long_lat(postcode)        
 
 
 
@@ -52,12 +83,13 @@ def processing_df_to_obtain_lat_long(df, BATCH_SIZE):
 
     longitudes = []
     latitudes = []
-
+    
     for index in range(0, len(df), BATCH_SIZE):
-        
-        print(f"Latitude and Longitude for: {index} of {len(df)//BATCH_SIZE + 1}")
+        progress = round((index//BATCH_SIZE + 1) / (len(df)//BATCH_SIZE + 1) * 100, 2)
+        print(f"Latitude and Longitude progress: {progress} %")
         # We obtain the longitudes and latitudes for the current batch
-        coordinates = df['first_postcode'].iloc[index:index + BATCH_SIZE].apply(get_longitude_latitude)
+        
+        coordinates = df['searched_postcode'].iloc[index:index + BATCH_SIZE].apply(get_longitude_latitude)
         lat, lon = zip(*coordinates)  # We separate the latitudes and longitudes
         latitudes.extend(lat)
         longitudes.extend(lon)

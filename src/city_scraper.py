@@ -8,8 +8,11 @@ Returns:
 import asyncio
 import aiohttp
 from bs4 import BeautifulSoup
-import requests
 import pandas as pd
+import requests
+import sqlite3
+import time
+from cache import amount_of_city_names, insert_city_postal_data
 
 def scraper_basic_info(URL_MAIN: str, URL_BASE: str, FRAGMENT_SIZE: int):
     """
@@ -24,7 +27,7 @@ def scraper_basic_info(URL_MAIN: str, URL_BASE: str, FRAGMENT_SIZE: int):
     - pd.DataFrame: The concatenated dataframe containing the scraped data.
 
     Example:
-    urls_to_names, city_dataframe = scraper_basic_info('https://example.com/main', 'https://example.com/', 100)
+    city_dataframe = scraper_basic_info('https://example.com/main', 'https://example.com/', 100)
 
     The function performs the following steps:
     1. Scrapes the basic information from the main URL and extracts city relative URLs.
@@ -44,8 +47,24 @@ def scraper_basic_info(URL_MAIN: str, URL_BASE: str, FRAGMENT_SIZE: int):
 
     # Get relative URL for each city
     city_url_rel = [city.find("a").get("href") for city in initial_data]
-    print(f"Amount of urls: {len(city_url_rel)}") # 2056
+    
+    total_of_cities_urls = len(city_url_rel)
+    
+    print(f"Amount of urls: {total_of_cities_urls}") # 2056
+    
+    conn = sqlite3.connect('geolocation_cache.db')
+    
+    amount_of_cities, query = amount_of_city_names()
+    
+    if total_of_cities_urls == amount_of_cities:
+        
+        df_city = pd.read_sql_query(query, conn,index_col='id', dtype = {'postcode': str})
+        conn.close()
+        
+        return df_city
 
+    conn.close()
+    
     # Obtaining the absolute url for each of the cities.
     url_city_absolute = [URL_BASE + href for href in city_url_rel]
 
@@ -57,7 +76,8 @@ def scraper_basic_info(URL_MAIN: str, URL_BASE: str, FRAGMENT_SIZE: int):
 
     for index, fragment in enumerate(fragments):
         # Perform scraping with each fragment
-        print(f"Perform scraping with the fragment: {index} of {len(fragments) - 1}")
+        progress = round((index/(len(fragments) - 1)) * 100, 2)
+        print(f"Scraping progress: {progress} %")
         scraper = WebScraper(urls = fragment)
 
         df_list.append(pd.DataFrame.from_dict(scraper.master_dict, orient='index'))
@@ -107,23 +127,32 @@ class WebScraper(object):
         - url (str): The URL of the city.
 
         Returns:
-        - Tuple: A tuple containing the URL and its corresponding postcode.
+        - Tuple: A tuple containing the URL its corresponding postcode and city name.
         """
+        retry_limit = 5
+        retries = 0
+        while retries < retry_limit:
+            try:
+                response = requests.get(url)
+                response.raise_for_status()
+                
+                async with session.get(url) as response:
+                    # 1. Extracting the Text:
+                    city_href = await response.text()
 
-        try:
-            async with session.get(url) as response:
-                # 1. Extracting the Text:
-                city_href = await response.text()
+                    # 2. Extracting the postcode:
+                    postcode = await self.extract_postcode(city_href)
 
-                # 2. Extracting the postcode:
-                postcode = await self.extract_postcode(city_href)
+                    # 2. Extracting the city_name:
+                    city_name = await self.extract_city_name(city_href)
+                    return url, postcode, city_name
 
-                # 2. Extracting the city_name:
-                city_name = await self.extract_city_name(city_href)
-                return url, postcode, city_name
-
-        except Exception as e:
-            print(str(e))
+            except Exception as e:
+                print(str(e))
+                retries += 1
+                if retries < retry_limit:
+                    print(f"Waiting 5 seconds...")
+                    time.sleep(5)
 
     async def extract_postcode(self, city_href):
 
@@ -191,6 +220,7 @@ class WebScraper(object):
             for html in htmls:
                 if html is not None:
                     url = html[0]
+                    insert_city_postal_data(city_name = html[2], postcode = html[1])
                     self.master_dict[url] = {'postcode': html[1],'city_name': html[2]}
                 else:
                     continue
