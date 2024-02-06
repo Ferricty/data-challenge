@@ -19,7 +19,7 @@ geolocator = Nominatim(user_agent=user_agent)
 
 def get_longitude_latitude(city_name, geolocator = geolocator):
     """
-    Convert the postcode to longitude and latitude coordinates and
+    Convert the city_name to longitude and latitude coordinates and
     return the results.
 
     Args:
