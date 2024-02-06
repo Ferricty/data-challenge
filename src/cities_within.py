@@ -13,7 +13,7 @@ def closer_cities(limit_distance: int|float,
                   origin_city: str = None,
                   postcode: str|int = None):
     """
-    Find cities within a specified distance and criteria.
+    Find postcodes within a specified distance and criteria.
 
     Args:
     - limit_distance (int): The maximum distance in kilometers for the search.
@@ -21,20 +21,18 @@ def closer_cities(limit_distance: int|float,
     - postcode (int): The postcode to determine the city for the search (optional).
 
     Returns:
-    - list: A list of nearby cities and their distances if found.
+    - list: A list of nearby postcodes
 
     Example:
     closer_cities(50, origin_city='Berlin')
     closer_cities(30, postcode=12345)
 
-    - If origin_city is provided, it returns the nearby cities based on the specified city.
+    - If origin_city is provided, it returns the nearby postcodes based on the specified city.
     - If postcode is provided, it returns the nearby cities based on the postcode.
 
     If neither origin_city nor postcode is provided, it prints a message indicating the missing parameters.
     If the provided postcode is not found in the dataset, it prints an error message.
-
-    Helper function:
-    The function helper_closer_city is used to find nearby cities based on the specified criteria.
+    
     """
     
     project_dir = os.path.dirname(__file__)
